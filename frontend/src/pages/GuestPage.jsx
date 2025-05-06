@@ -51,6 +51,12 @@ function GuestPage() {
   // Handlers for fetching data
   const handleFetchMatches = async (e) => {
     e.preventDefault();
+    // Add check: Only fetch if matchesTrId is not empty
+    if (!matchesTrId) {
+      setMatchesMessage('Please enter a Tournament ID.');
+      setMatches([]); // Clear any previous results
+      return; // Stop execution if no ID is entered
+    }
     setMatchesMessage('Fetching matches...');
     setMatches([]); // Clear previous results
     try {
@@ -64,6 +70,12 @@ function GuestPage() {
 
   const handleFetchRedCards = async (e) => {
     e.preventDefault();
+    // Add check: Only fetch if redCardTeamId is not empty
+    if (!redCardTeamId) {
+      setRedCardMessage('Please enter a Team ID.');
+      setRedCardedPlayers([]); // Clear previous results
+      return; // Stop execution if no ID is entered
+    }
     setRedCardMessage('Fetching red carded players...');
     setRedCardedPlayers([]);
     try {
@@ -127,9 +139,9 @@ function GuestPage() {
               </TableHeader>
               <TableBody>
                 {matches.map((match) => (
-                  <TableRow key={match.match_id}>
-                    <TableCell>{match.match_id}</TableCell>
-                    <TableCell>{new Date(match.match_date).toLocaleDateString()}</TableCell>
+                  <TableRow key={match.match_no}>
+                    <TableCell>{match.match_no}</TableCell>
+                    <TableCell>{new Date(match.play_date).toLocaleDateString()}</TableCell>
                     <TableCell>{match.venue_name}</TableCell>
                     <TableCell>{match.team1_name}</TableCell>
                     <TableCell>{match.team2_name}</TableCell>
@@ -159,10 +171,10 @@ function GuestPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {topScorers.map((scorer, index) => (
-                  <TableRow key={index}>
+                {topScorers.map((scorer) => (
+                  <TableRow key={scorer.player_id}>
                     <TableCell>{scorer.player_name}</TableCell>
-                    <TableCell>{scorer.team_name}</TableCell>
+                    <TableCell>{scorer.team_name || 'N/A'}</TableCell>
                     <TableCell>{scorer.total_goals}</TableCell>
                   </TableRow>
                 ))}
@@ -196,11 +208,11 @@ function GuestPage() {
                  </TableRow>
                </TableHeader>
                <TableBody>
-                 {redCardedPlayers.map((player, index) => (
-                   <TableRow key={index}>
+                 {redCardedPlayers.map((player) => (
+                   <TableRow key={`${player.player_id}-${player.match_no}`}>
                      <TableCell>{player.player_name}</TableCell>
-                     <TableCell>{player.match_id}</TableCell>
-                     <TableCell>{player.card_time || 'N/A'}</TableCell>
+                     <TableCell>{player.match_no}</TableCell>
+                     <TableCell>{player.play_date ? new Date(player.play_date).toLocaleDateString() : 'N/A'}</TableCell>
                    </TableRow>
                  ))}
                </TableBody>
@@ -237,12 +249,19 @@ function GuestPage() {
                  </TableRow>
                </TableHeader>
                <TableBody>
-                 {teamComposition.map((player, index) => (
-                   <TableRow key={index}>
-                     <TableCell>{player.player_name}</TableCell>
-                     <TableCell>{player.playing_position}</TableCell>
-                     <TableCell>{player.status || (player.is_captain ? 'Captain' : 'Player')}</TableCell>
+                 {teamComposition.players && teamComposition.players.map((player) => (
+                   <TableRow key={player.player_id}>
+                     <TableCell>{player.name}</TableCell>
+                     <TableCell>{player.position}</TableCell>
+                     <TableCell>{player.jersey_no}</TableCell>
                    </TableRow>
+                 ))}
+                 {teamComposition.support_staff && teamComposition.support_staff.map((staff) => (
+                    <TableRow key={staff.support_id}>
+                        <TableCell>{staff.name}</TableCell>
+                        <TableCell>{staff.role}</TableCell>
+                        <TableCell>-</TableCell>
+                    </TableRow>
                  ))}
                </TableBody>
              </Table>

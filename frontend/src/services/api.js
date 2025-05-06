@@ -4,7 +4,7 @@ import axios from 'axios';
 // During development, the backend might run on localhost:5000 (or whatever PORT is set in .env)
 // In production, this would be the deployed backend URL.
 // Use Vite's env variable mechanism
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
