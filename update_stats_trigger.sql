@@ -21,20 +21,15 @@ BEGIN
     DECLARE draw2 INT DEFAULT 0;
     DECLARE loss2 INT DEFAULT 0;
 
-    -- Get match details from the new/updated row
+    -- Get match details from match_details table
     SET team1_id = NEW.team_id1;
     SET team2_id = NEW.team_id2;
-    SET score1 = NEW.team1_score;
-    SET score2 = NEW.team2_score;
+    SELECT goal_score INTO score1 FROM match_details WHERE match_no = NEW.match_no AND team_id = team1_id LIMIT 1;
+    SELECT goal_score INTO score2 FROM match_details WHERE match_no = NEW.match_no AND team_id = team2_id LIMIT 1;
 
-    -- Find the tournament ID (assuming a team belongs to only one tournament active at a time, or we need a way to link match_played to tr_id)
-    -- Let's find the tournament ID via the tournament_team table. This assumes the teams are already in the tournament.
-    -- A direct tr_id in match_played would simplify this.
     SELECT tr_id INTO tournament_id FROM tournament_team WHERE team_id = team1_id LIMIT 1;
 
-    -- Check if scores are not NULL (match has been played/resulted)
     IF score1 IS NOT NULL AND score2 IS NOT NULL THEN
-        -- Determine points and win/draw/loss status
         IF score1 > score2 THEN
             SET points1 = 3;
             SET points2 = 0;
@@ -45,14 +40,13 @@ BEGIN
             SET points2 = 3;
             SET loss1 = 1;
             SET win2 = 1;
-        ELSE -- Draw
+        ELSE
             SET points1 = 1;
             SET points2 = 1;
             SET draw1 = 1;
             SET draw2 = 1;
         END IF;
 
-        -- Update stats for team 1 in the specific tournament
         UPDATE tournament_team
         SET
             points = points + points1,
@@ -63,7 +57,6 @@ BEGIN
             goals_against = goals_against + score2
         WHERE team_id = team1_id AND tr_id = tournament_id;
 
-        -- Update stats for team 2 in the specific tournament
         UPDATE tournament_team
         SET
             points = points + points2,
@@ -73,7 +66,6 @@ BEGIN
             goals_for = goals_for + score2,
             goals_against = goals_against + score1
         WHERE team_id = team2_id AND tr_id = tournament_id;
-
     END IF;
 END; //
 
@@ -109,21 +101,16 @@ BEGIN
     DECLARE new_draw2 INT DEFAULT 0;
     DECLARE new_loss2 INT DEFAULT 0;
 
-    -- Get match details
     SET team1_id = NEW.team_id1;
     SET team2_id = NEW.team_id2;
-    SET old_score1 = OLD.team1_score;
-    SET old_score2 = OLD.team2_score;
-    SET new_score1 = NEW.team1_score;
-    SET new_score2 = NEW.team2_score;
+    SELECT goal_score INTO old_score1 FROM match_details WHERE match_no = OLD.match_no AND team_id = team1_id LIMIT 1;
+    SELECT goal_score INTO old_score2 FROM match_details WHERE match_no = OLD.match_no AND team_id = team2_id LIMIT 1;
+    SELECT goal_score INTO new_score1 FROM match_details WHERE match_no = NEW.match_no AND team_id = team1_id LIMIT 1;
+    SELECT goal_score INTO new_score2 FROM match_details WHERE match_no = NEW.match_no AND team_id = team2_id LIMIT 1;
 
-    -- Only proceed if scores actually changed and are not NULL
     IF (old_score1 <> new_score1 OR old_score2 <> new_score2) AND new_score1 IS NOT NULL AND new_score2 IS NOT NULL THEN
-
-        -- Find the tournament ID
         SELECT tr_id INTO tournament_id FROM tournament_team WHERE team_id = team1_id LIMIT 1;
 
-        -- Calculate old points/stats (if old scores were valid)
         IF old_score1 IS NOT NULL AND old_score2 IS NOT NULL THEN
             IF old_score1 > old_score2 THEN SET old_points1 = 3; SET old_win1 = 1; SET old_loss2 = 1;
             ELSEIF old_score1 < old_score2 THEN SET old_points2 = 3; SET old_loss1 = 1; SET old_win2 = 1;
@@ -131,13 +118,11 @@ BEGIN
             END IF;
         END IF;
 
-        -- Calculate new points/stats
         IF new_score1 > new_score2 THEN SET new_points1 = 3; SET new_win1 = 1; SET new_loss2 = 1;
         ELSEIF new_score1 < new_score2 THEN SET new_points2 = 3; SET new_loss1 = 1; SET new_win2 = 1;
         ELSE SET new_points1 = 1; SET new_points2 = 1; SET new_draw1 = 1; SET new_draw2 = 1;
         END IF;
 
-        -- Update stats for team 1: subtract old contribution, add new contribution
         UPDATE tournament_team
         SET
             points = points - old_points1 + new_points1,
@@ -148,7 +133,6 @@ BEGIN
             goals_against = goals_against - IFNULL(old_score2, 0) + new_score2
         WHERE team_id = team1_id AND tr_id = tournament_id;
 
-        -- Update stats for team 2: subtract old contribution, add new contribution
         UPDATE tournament_team
         SET
             points = points - old_points2 + new_points2,
@@ -158,7 +142,6 @@ BEGIN
             goals_for = goals_for - IFNULL(old_score2, 0) + new_score2,
             goals_against = goals_against - IFNULL(old_score1, 0) + new_score1
         WHERE team_id = team2_id AND tr_id = tournament_id;
-
     END IF;
 END; //
 

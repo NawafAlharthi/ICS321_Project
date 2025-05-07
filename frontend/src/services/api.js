@@ -1,15 +1,16 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Determine the backend URL based on the environment
 // During development, the backend might run on localhost:5000 (or whatever PORT is set in .env)
 // In production, this would be the deployed backend URL.
 // Use Vite's env variable mechanism
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -25,7 +26,7 @@ const apiClient = axios.create({
 // == Tournament Admin Services ==
 
 export const addTournament = (tournamentData) => {
-  return apiClient.post('/tournaments', tournamentData);
+  return apiClient.post("/tournaments", tournamentData);
 };
 
 export const deleteTournament = (tournamentId) => {
@@ -38,38 +39,48 @@ export const addTeamToTournament = (tr_id, teamData) => {
 
 export const approvePlayer = (tr_id, team_id, player_id) => {
   // Assuming the backend route is POST for this action
-  return apiClient.post(`/tournaments/${tr_id}/teams/${team_id}/players/${player_id}/approve`);
+  return apiClient.post(
+    `/tournaments/${tr_id}/teams/${team_id}/players/${player_id}/approve`
+  );
 };
+
+export const selectCaptain = (tr_id, team_id, player_id) =>
+  apiClient.post("/captain", { tr_id, team_id, player_id });
 
 // == Guest Services ==
 
-export const getMatchesByTournament = (tr_id, sortByDate = 'asc') => {
-  return apiClient.get(`/tournaments/${tr_id}/matches?sort_by_date=${sortByDate}`);
+export const getMatchesByTournament = (tr_id, sortByDate = "asc") => {
+  return apiClient.get(
+    `/tournaments/${tr_id}/matches?sort_by_date=${sortByDate}`
+  );
 };
 
 export const getTopScorers = () => {
-  return apiClient.get('/scorers');
+  return apiClient.get("/scorers");
 };
 
 export const getRedCardedPlayers = (team_id) => {
   return apiClient.get(`/teams/${team_id}/redcards`);
 };
 
-export const getTeamComposition = (team_id, tr_id) => {
-  return apiClient.get(`/teams/${team_id}/composition?tr_id=${tr_id}`);
-};
+export const getTeamComposition = (team_id) =>
+  apiClient.get(`/teams/${team_id}/composition`);
 
 // == System Services (Placeholder) ==
 
 export const login = (credentials) => {
   // Using placeholder endpoint
-  return apiClient.post('/login', credentials);
+  return apiClient.post("/login", credentials);
 };
 
 export const logout = () => {
   // Using placeholder endpoint
-  return apiClient.post('/logout');
+  return apiClient.post("/logout");
+};
+
+// Send next match reminder (mock)
+export const sendReminders = (team_id, tr_id) => {
+  return apiClient.post("/reminders", { team_id, tr_id });
 };
 
 export default apiClient;
-

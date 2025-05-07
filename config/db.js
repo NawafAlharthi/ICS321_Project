@@ -10,7 +10,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
 });
 
 // Optional: Test connection on startup (already done in server.js, but can be useful here too)
@@ -34,4 +34,3 @@ pool.getConnection((err, connection) => {
 });
 
 module.exports = pool;
-
