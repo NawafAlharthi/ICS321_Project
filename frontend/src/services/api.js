@@ -78,9 +78,13 @@ export const logout = () => {
   return apiClient.post("/logout");
 };
 
-// Send next match reminder (mock)
-export const sendReminders = (team_id, tr_id) => {
-  return apiClient.post("/reminders", { team_id, tr_id });
+// Send next match reminder to all players of the selected team
+export const sendReminders = (teamId) => {
+  return apiClient.post(`/send-reminder/${teamId}`);
+};
+
+export const getAllTeams = () => {
+  return apiClient.get("/teams");
 };
 
 export default apiClient;

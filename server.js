@@ -10,8 +10,8 @@ const app = express();
 // Middleware
 // Configure CORS more explicitly
 const corsOptions = {
-  origin: 'http://localhost:5173', // Allow only the frontend origin
-  optionsSuccessStatus: 200 // For legacy browser support
+  origin: "http://localhost:5173", // Allow only the frontend origin
+  optionsSuccessStatus: 200, // For legacy browser support
 };
 app.use(cors(corsOptions)); // Use configured CORS options
 
@@ -49,4 +49,3 @@ db.getConnection((err, connection) => {
     });
   }
 });
-

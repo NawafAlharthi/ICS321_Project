@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Add useEffect here
+
 import {
   addTournament,
   deleteTournament,
@@ -6,6 +7,7 @@ import {
   approvePlayer,
   selectCaptain,
   sendReminders,
+  getAllTeams,
 } from "../services/api";
 // Assuming Shadcn/ui components are available at these paths
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,21 @@ function TournamentAdminPage() {
     player_id: "",
   });
   const [reminderData, setReminderData] = useState({ team_id: "", tr_id: "" });
+
+  const [teams, setTeams] = useState([]);
+  const [selectedTeamId, setSelectedTeamId] = useState("");
+
+  useEffect(() => {
+    async function fetchTeams() {
+      try {
+        const response = await getAllTeams();
+        setTeams(response.data);
+      } catch (err) {
+        console.error("Failed to load teams", err);
+      }
+    }
+    fetchTeams();
+  }, []);
 
   // State for feedback/errors (per section)
   const [addTournamentMsg, setAddTournamentMsg] = useState("");
@@ -621,7 +638,7 @@ function TournamentAdminPage() {
           </SectionCard>
 
           {/* Send Reminders Card */}
-          <SectionCard icon="📢" title="Send Reminders" color="yellow">
+          {/* <SectionCard icon="📢" title="Send Reminders" color="yellow">
             {reminderMsg && (
               <div
                 className={`p-2 rounded mb-4 text-center ${
@@ -697,6 +714,75 @@ function TournamentAdminPage() {
                 className="w-full bg-yellow-600 hover:bg-yellow-700"
               >
                 Send Reminders
+              </Button>
+            </form>
+          </SectionCard> */}
+
+          <SectionCard icon="📧" title="Send Match Reminder" color="blue">
+            {reminderMsg && (
+              <div
+                className={`p-4 rounded-lg mb-6 ${
+                  reminderError
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-green-50 text-green-700 border border-green-200"
+                }`}
+              >
+                {reminderMsg}
+              </div>
+            )}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setReminderMsg("");
+                setReminderError(false);
+                try {
+                  setReminderMsg("");
+                  setReminderError(false);
+
+                  const res = await sendReminders(selectedTeamId); // يستدعي من api.js
+
+                  const msg = res.data;
+                  if (msg.includes("No upcoming matches")) {
+                    setReminderMsg(msg);
+                  } else {
+                    setReminderMsg("Success: Reminder sent!");
+                  }
+                } catch (err) {
+                  setReminderMsg(
+                    "Error: " + (err.response?.data?.message || err.message)
+                  );
+                  setReminderError(true);
+                }
+              }}
+              className="space-y-6"
+            >
+              <div>
+                <Label
+                  htmlFor="teamSelect"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Select Team
+                </Label>
+                <select
+                  id="teamSelect"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm"
+                  value={selectedTeamId}
+                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                  required
+                >
+                  <option value="">Choose a team</option>
+                  {teams.map((team) => (
+                    <option key={team.team_id} value={team.team_id}>
+                      {team.team_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Send Reminder
               </Button>
             </form>
           </SectionCard>

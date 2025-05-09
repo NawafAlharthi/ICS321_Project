@@ -1,4 +1,6 @@
 const express = require("express");
+const mailRoutes = require("./mail");
+
 const router = express.Router();
 
 // Import controllers
@@ -41,5 +43,7 @@ router.post("/login", systemController.login);
 router.post("/logout", systemController.logout);
 // Send next match reminder (mock)
 router.post("/reminders", systemController.sendReminders);
+
+router.use(mailRoutes);
 
 module.exports = router;
