@@ -742,8 +742,11 @@ function TournamentAdminPage() {
                   const res = await sendReminders(selectedTeamId); // يستدعي من api.js
 
                   const msg = res.data;
-                  if (msg.includes("No upcoming matches")) {
-                    setReminderMsg(msg);
+                  if (
+                    msg.includes("No upcoming matches") ||
+                    msg.includes("No players with emails")
+                  ) {
+                    setReminderMsg(msg); // رسالة حيادية
                   } else {
                     setReminderMsg("Success: Reminder sent!");
                   }

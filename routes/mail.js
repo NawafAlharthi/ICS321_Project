@@ -59,7 +59,7 @@ router.post("/send-reminder/:teamId", async (req, res) => {
     const emails = players.map((player) => player.email).filter(Boolean);
 
     if (emails.length === 0) {
-      return res.status(400).send("No players with emails found in this team.");
+      return res.status(200).send("No players with emails found in this team.");
     }
 
     // 📧 إرسال الإيميلات

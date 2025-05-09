@@ -192,53 +192,194 @@ exports.selectCaptain = async (req, res) => {
 // Approve a player to join a team (in a tournament context)
 // The schema links players to teams via team_player for a specific tournament.
 // Assuming "Approve" means adding the player to the team_player table.
+
+// exports.approvePlayer = async (req, res) => {
+//   const { tr_id, team_id, player_id } = req.params;
+
+//   if (!tr_id || !team_id || !player_id) {
+//     return res
+//       .status(400)
+//       .json({ message: "Missing required IDs (tr_id, team_id, player_id)" });
+//   }
+
+//   try {
+//     // Check if player and team exist (optional, FK constraints handle this but good practice)
+//     // Check if player is already in the team for this tournament
+//     const [[existing]] = await db
+//       .promise()
+//       .query(
+//         "SELECT 1 FROM team_player WHERE player_id = ? AND team_id = ? AND tr_id = ?",
+//         [player_id, team_id, tr_id]
+//       );
+//     if (existing) {
+//       return res.status(409).json({
+//         message: "Player already approved for this team in this tournament.",
+//       });
+//     }
+
+//     // Add player to the team for the tournament
+//     const query =
+//       "INSERT INTO team_player (player_id, team_id, tr_id) VALUES (?, ?, ?)";
+//     await db.promise().query(query, [player_id, team_id, tr_id]);
+
+//     res.status(201).json({
+//       message:
+//         "Player approved and added to the team for the tournament successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error approving player:", error);
+//     if (error.code === "ER_NO_REFERENCED_ROW_2") {
+//       // Check which foreign key failed
+//       if (error.message.includes("`player`")) {
+//         return res.status(404).json({ message: "Player not found." });
+//       } else if (error.message.includes("`team`")) {
+//         return res.status(404).json({ message: "Team not found." });
+//       } else if (error.message.includes("`tournament`")) {
+//         return res.status(404).json({ message: "Tournament not found." });
+//       }
+//     }
+//     res
+//       .status(500)
+//       .json({ message: "Failed to approve player", error: error.message });
+//   }
+// };
+
+// exports.approvePlayer = async (req, res) => {
+//   const tr_id = parseInt(req.params.tr_id, 10);
+//   const team_id = parseInt(req.params.team_id, 10);
+//   const player_id = parseInt(req.params.player_id, 10);
+
+//   if (!tr_id || !team_id || !player_id)
+//     return res.status(400).json({ message: "Missing IDs" });
+
+//   const conn = await db.promise().getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     /* 1 ) هل اللاعب مسجَّل أصلاً في هذه البطولة؟ */
+//     const [[existing]] = await conn.query(
+//       `SELECT team_id
+//          FROM team_player
+//         WHERE player_id = ? AND tr_id = ? FOR UPDATE`,
+//       [player_id, tr_id]
+//     );
+
+//     /* 2 ) لو مسجَّل مع نفس الفريق ➜ 409 */
+//     if (existing && existing.team_id === team_id) {
+//       await conn.rollback();
+//       return res
+//         .status(409)
+//         .json({ message: "Player already in this team for this tournament." });
+//     }
+
+//     /* 3 ) مسجَّل مع فريق آخر ➜ انقله */
+//     if (existing) {
+//       await conn.query(
+//         `UPDATE team_player
+//             SET team_id = ?
+//           WHERE player_id = ? AND tr_id = ?`,
+//         [team_id, player_id, tr_id]
+//       );
+//       await conn.commit();
+//       return res
+//         .status(200)
+//         .json({
+//           message: `Player moved from team ${existing.team_id} to ${team_id}.`,
+//         });
+//     }
+
+//     /* 4 ) غير مسجَّل إطلاقاً ➜ أدخِله */
+//     await conn.query(
+//       `INSERT INTO team_player (player_id, team_id, tr_id)
+//        VALUES (?, ?, ?)`,
+//       [player_id, team_id, tr_id]
+//     );
+//     await conn.commit();
+//     return res
+//       .status(201)
+//       .json({ message: "Player approved and added to the team." });
+//   } catch (err) {
+//     await conn.rollback();
+//     if (err.code === "ER_NO_REFERENCED_ROW_2")
+//       return res
+//         .status(404)
+//         .json({ message: "Invalid FK (player/team/tournament)." });
+//     console.error(err);
+//     res.status(500).json({ message: "Server error", error: err.message });
+//   } finally {
+//     conn.release();
+//   }
+// };
+
 exports.approvePlayer = async (req, res) => {
-  const { tr_id, team_id, player_id } = req.params;
+  const tr_id = parseInt(req.params.tr_id, 10);
+  const team_id = parseInt(req.params.team_id, 10);
+  const player_id = parseInt(req.params.player_id, 10);
 
-  if (!tr_id || !team_id || !player_id) {
-    return res
-      .status(400)
-      .json({ message: "Missing required IDs (tr_id, team_id, player_id)" });
-  }
+  if (!tr_id || !team_id || !player_id)
+    return res.status(400).json({ message: "Missing IDs" });
 
+  const conn = await db.promise().getConnection();
   try {
-    // Check if player and team exist (optional, FK constraints handle this but good practice)
-    // Check if player is already in the team for this tournament
-    const [[existing]] = await db
-      .promise()
-      .query(
-        "SELECT 1 FROM team_player WHERE player_id = ? AND team_id = ? AND tr_id = ?",
-        [player_id, team_id, tr_id]
-      );
-    if (existing) {
-      return res.status(409).json({
-        message: "Player already approved for this team in this tournament.",
-      });
+    await conn.beginTransaction();
+
+    /* هل لدى اللاعب صفّ مسبق (بغضّ النظر عن البطولة أو الفريق)؟ */
+    const [rows] = await conn.query(
+      `SELECT team_id, tr_id
+         FROM team_player
+        WHERE player_id = ?       /* نحجز الصفوف القديمة */
+        FOR UPDATE`,
+      [player_id]
+    );
+
+    /* 1) اللاعب مسجَّل مع نفس الفريق ونفس البطولة ⇒ 409 */
+    if (
+      rows.length === 1 &&
+      rows[0].team_id === team_id &&
+      rows[0].tr_id === tr_id
+    ) {
+      await conn.rollback();
+      return res
+        .status(409)
+        .json({ message: "Player already registered with this team." });
     }
 
-    // Add player to the team for the tournament
-    const query =
-      "INSERT INTO team_player (player_id, team_id, tr_id) VALUES (?, ?, ?)";
-    await db.promise().query(query, [player_id, team_id, tr_id]);
+    /* 2) حذف كل الصفوف القديمة (إن وُجدت) */
+    if (rows.length > 0) {
+      await conn.query(`DELETE FROM team_player WHERE player_id = ?`, [
+        player_id,
+      ]);
+    }
 
-    res.status(201).json({
+    /* 3) إضافة الصفّ الجديد */
+    await conn.query(
+      `INSERT INTO team_player (player_id, team_id, tr_id)
+       VALUES (?, ?, ?)`,
+      [player_id, team_id, tr_id]
+    );
+
+    await conn.commit();
+
+    const movedFrom =
+      rows.length === 0
+        ? null
+        : ` (was in team ${rows[0].team_id}, tournament ${rows[0].tr_id})`;
+
+    return res.status(201).json({
       message:
-        "Player approved and added to the team for the tournament successfully",
+        "Player approved and recorded with new team/tournament" +
+        (movedFrom || ""),
     });
-  } catch (error) {
-    console.error("Error approving player:", error);
-    if (error.code === "ER_NO_REFERENCED_ROW_2") {
-      // Check which foreign key failed
-      if (error.message.includes("`player`")) {
-        return res.status(404).json({ message: "Player not found." });
-      } else if (error.message.includes("`team`")) {
-        return res.status(404).json({ message: "Team not found." });
-      } else if (error.message.includes("`tournament`")) {
-        return res.status(404).json({ message: "Tournament not found." });
-      }
-    }
-    res
-      .status(500)
-      .json({ message: "Failed to approve player", error: error.message });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === "ER_NO_REFERENCED_ROW_2")
+      return res
+        .status(404)
+        .json({ message: "Invalid FK (player / team / tournament)." });
+
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  } finally {
+    conn.release();
   }
 };

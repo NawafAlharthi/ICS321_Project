@@ -177,7 +177,7 @@ function GuestPage() {
                     className="mt-1"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <Label
                     htmlFor="matchesSort"
                     className="text-sm font-medium text-gray-700"
@@ -193,7 +193,7 @@ function GuestPage() {
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                   </select>
-                </div>
+                </div> */}
                 <Button
                   type="submit"
                   className="bg-indigo-600 hover:bg-indigo-700"
