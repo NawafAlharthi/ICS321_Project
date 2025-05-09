@@ -279,12 +279,12 @@ function TournamentAdminPage() {
                 setDeleteTournamentError(false);
                 try {
                   const response = await deleteTournament(delTournamentId);
-                  setDeleteTournamentMsg("تم حذف البطولة بنجاح!");
+                  setDeleteTournamentMsg("Tournament deleted successfully!");
                   setDeleteTournamentError(false);
                   setDelTournamentId("");
                 } catch (error) {
                   setDeleteTournamentMsg(
-                    `خطأ أثناء حذف البطولة: ${
+                    `Error tournament has not been deleted ${
                       error.response?.data?.message || error.message
                     }`
                   );
@@ -344,7 +344,7 @@ function TournamentAdminPage() {
                     team_name: newTeam.team_name,
                     team_group: newTeam.team_group,
                   });
-                  setAddTeamMsg("تمت إضافة الفريق بنجاح!");
+                  setAddTeamMsg("Team added successfully!");
                   setAddTeamError(false);
                   setNewTeam({
                     tr_id: "",
@@ -354,7 +354,7 @@ function TournamentAdminPage() {
                   });
                 } catch (error) {
                   setAddTeamMsg(
-                    `خطأ أثناء إضافة الفريق: ${
+                    `Error in adding the team sorry ${
                       error.response?.data?.message || error.message
                     }`
                   );
@@ -472,7 +472,7 @@ function TournamentAdminPage() {
                     approvePlayerData.team_id,
                     approvePlayerData.player_id
                   );
-                  setApprovePlayerMsg("تمت الموافقة على اللاعب بنجاح!");
+                  setApprovePlayerMsg("Player approved successfully!");
                   setApprovePlayerError(false);
                   setApprovePlayerData({
                     tr_id: "",
@@ -481,7 +481,7 @@ function TournamentAdminPage() {
                   });
                 } catch (error) {
                   setApprovePlayerMsg(
-                    `خطأ أثناء الموافقة على اللاعب: ${
+                    `Error while approving the player sorry ${
                       error.response?.data?.message || error.message
                     }`
                   );
@@ -579,12 +579,12 @@ function TournamentAdminPage() {
                     captainData.team_id,
                     captainData.player_id
                   );
-                  setSelectCaptainMsg("تم تعيين الكابتن بنجاح!");
+                  setSelectCaptainMsg("Captain selected successfully!");
                   setSelectCaptainError(false);
                   setCaptainData({ tr_id: "", team_id: "", player_id: "" });
                 } catch (error) {
                   setSelectCaptainMsg(
-                    `خطأ أثناء تعيين الكابتن: ${
+                    `Error while selecting the captin ${
                       error.response?.data?.message || error.message
                     }`
                   );
